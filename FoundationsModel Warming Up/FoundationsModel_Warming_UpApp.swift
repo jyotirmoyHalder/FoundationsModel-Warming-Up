@@ -11,7 +11,7 @@ import SwiftUI
 struct FoundationsModel_Warming_UpApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ItemQueryView()
         }
     }
 }
