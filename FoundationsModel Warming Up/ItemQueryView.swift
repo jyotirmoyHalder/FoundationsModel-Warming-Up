@@ -23,16 +23,16 @@ struct ItemQueryView: View {
     @State private var isLoading = false
     
     // Response
-     var responseString: String {
+     @State private var responseString: String = ""
+        
+    // Promt
+    var prompt: String {
         if invalidItemName {
             return ""
         } else {
             return quantity == 1 ? "Please name \(quantity.formatted()) type of \(itemName)" : "Please name \(quantity.formatted()) types of \(itemName)"
         }
     }
-        
-    // Promt
-    @State private var promt: String = "some "
     
     var body: some View {
         NavigationStack {
@@ -63,7 +63,7 @@ struct ItemQueryView: View {
                 .shadow(radius: 4)
                 
                 // Prompt
-                Text(promt)
+                Text(prompt)
                     .font(.title2)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
@@ -71,7 +71,9 @@ struct ItemQueryView: View {
                 // Action Button
                 Button {
                     // TODO: Action...
-                    
+                    Task {
+                        await generateItems()
+                    }
                 } label: {
                     if isLoading {
                         ProgressView()
@@ -86,7 +88,7 @@ struct ItemQueryView: View {
                 .disabled(invalidItemName)
                 
                 // Response Display
-                if responseString.isEmpty {
+                if !responseString.isEmpty {
                     // show response
                     GroupBox {
                         VStack(alignment: .leading, spacing: 8) {
@@ -94,8 +96,8 @@ struct ItemQueryView: View {
                                 .font(.headline)
                                 .foregroundStyle(.primary)
                             
-                            if let error = errorMessage {
-                                Text("Unable to Generate Items.\(error)")
+                            if let _ = errorMessage {
+                                Text("Unable to Generate Items. ")
                                     .foregroundStyle(.red)
                                     .padding()
                             } else {
@@ -113,6 +115,22 @@ struct ItemQueryView: View {
             .padding()
             .navigationTitle("Item Generator")
         }
+    }
+    
+    private func generateItems() async {
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            let session = LanguageModelSession()
+            let response = try await session
+                .respond(to: prompt)
+            responseString = response.content
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        
+        isLoading = false
     }
 }
 
